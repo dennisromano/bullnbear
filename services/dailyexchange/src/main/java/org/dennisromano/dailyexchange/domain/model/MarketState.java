@@ -28,6 +28,7 @@ package org.dennisromano.dailyexchange.domain.model;
  * @since 1.0
  */
 public record MarketState(
+        int day,
         double price,
         double previousPrice,
         double quantity,
@@ -46,18 +47,11 @@ public record MarketState(
      * @throws IllegalArgumentException if sigma is negative
      */
     public MarketState {
-        if (price <= 0) {
-            throw new IllegalArgumentException("Price must be positive");
-        }
-        if (previousPrice <= 0) {
-            throw new IllegalArgumentException("Previous price must be positive");
-        }
-        if (quantity < 0) {
-            throw new IllegalArgumentException("Quantity cannot be negative");
-        }
-        if (sigma < 0) {
-            throw new IllegalArgumentException("Sigma cannot be negative");
-        }
+        if(day < 0) throw new IllegalArgumentException("Day cannot be negative");
+        if (price <= 0) throw new IllegalArgumentException("Price must be positive");
+        if (previousPrice <= 0) throw new IllegalArgumentException("Previous price must be positive");
+        if (quantity < 0) throw new IllegalArgumentException("Quantity cannot be negative");
+        if (sigma < 0) throw new IllegalArgumentException("Sigma cannot be negative");
     }
 
     /**

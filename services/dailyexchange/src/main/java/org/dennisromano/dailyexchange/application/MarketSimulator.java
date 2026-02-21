@@ -7,6 +7,7 @@ import org.dennisromano.dailyexchange.domain.ports.PricingStrategy;
 import org.dennisromano.dailyexchange.domain.ports.ShockProvider;
 import org.dennisromano.dailyexchange.domain.ports.VolatilityStrategy;
 
+import java.util.Optional;
 import java.util.random.RandomGenerator;
 
 /**
@@ -51,9 +52,6 @@ public class MarketSimulator {
 
     /** Target drift (expected return) for the market */
     private final double targetMu;
-    
-    /** Target volatility for the market */
-    private final double targetSigma;
 
     /**
      * Constructs a new MarketSimulator with the specified strategies and parameters.
@@ -63,7 +61,6 @@ public class MarketSimulator {
      * @param shockProvider the provider to generate random shock events
      * @param rng the random number generator for quantity variations
      * @param targetMu the target drift (expected annual return) for drift calculations
-     * @param targetSigma the target volatility (annual standard deviation) for drift calculations
      * 
      * @throws NullPointerException if any of the object parameters is null
      */
@@ -72,15 +69,13 @@ public class MarketSimulator {
             PricingStrategy pricingStrategy,
             ShockProvider shockProvider,
             RandomGenerator rng,
-            double targetMu,
-            double targetSigma) {
+            double targetMu) {
         
         this.volatilityStrategy = volatilityStrategy;
         this.pricingStrategy = pricingStrategy;
         this.shockProvider = shockProvider;
         this.rng = rng;
         this.targetMu = targetMu;
-        this.targetSigma = targetSigma;
     }
 
     /**
@@ -106,12 +101,12 @@ public class MarketSimulator {
      * @throws NullPointerException if state is null
      * @throws IllegalArgumentException if state contains invalid values
      */
-    public SimulationResult next(MarketState state) {
+    public SimulationResult next(int day, MarketState state) {
         double sigma = state.sigma();
         ShockEvent shockEvent = null;
 
         // 1. Check if a shock event occurs
-        var shock = shockProvider.generateShock();
+        final Optional<ShockEvent> shock = shockProvider.generateShock();
         if (shock.isPresent()) {
             shockEvent = shock.get();
             // Increase volatility based on shock intensity
@@ -122,21 +117,22 @@ public class MarketSimulator {
         sigma = volatilityStrategy.calculateNextVolatility(sigma);
 
         // 3. Use target mu (GBM already applies the -0.5*sigma² adjustment)
-        double mu = targetMu;
+        final  double mu = targetMu;
 
         // 4. Calculate new price using the pricing engine
-        double currentPrice = state.price();
-        double newPrice = pricingStrategy.calculateNextPrice(currentPrice, mu, sigma);
+        final double currentPrice = state.price();
+        final double newPrice = pricingStrategy.calculateNextPrice(currentPrice, mu, sigma);
         
         // 5. Calculate effective drift after GBM adjustment (for informational purposes)
-        double effectiveDrift = mu - 0.5 * sigma * sigma;
+        final double effectiveDrift = mu - 0.5 * sigma * sigma;
 
         // 6. Calculate random quantity variation (±4%)
-        double quantityVariation = (rng.nextDouble() - 0.5) * state.quantity() * 0.04;
-        double newQuantity = state.quantity() + quantityVariation;
+        final  double quantityVariation = (rng.nextDouble() - 0.5) * state.quantity() * 0.04;
+        final  double newQuantity = state.quantity() + quantityVariation;
 
         // 7. Create new state, saving previous price to calculate variation
-        MarketState newState = new MarketState(
+        final MarketState newState = new MarketState(
+            day,
             newPrice,           // new price
             currentPrice,       // previous price (for calculating variation)
             newQuantity, 

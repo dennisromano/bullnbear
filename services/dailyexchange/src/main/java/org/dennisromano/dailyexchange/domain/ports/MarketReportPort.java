@@ -1,6 +1,8 @@
 package org.dennisromano.dailyexchange.domain.ports;
 
+import org.dennisromano.dailyexchange.domain.model.MarketReport;
 import org.dennisromano.dailyexchange.domain.model.MarketState;
+import org.dennisromano.dailyexchange.domain.model.ShockEvent;
 
 /**
  * Port interface for formatting and reporting market state information.
@@ -51,5 +53,5 @@ public interface MarketReportPort {
      * 
      * @throws NullPointerException if state is null (implementation-dependent)
      */
-    String format(MarketState state);
+    MarketReport generateReport(MarketState state, ShockEvent shockEvent);
 }

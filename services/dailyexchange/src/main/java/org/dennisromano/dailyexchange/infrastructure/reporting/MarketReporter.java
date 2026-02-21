@@ -1,10 +1,14 @@
 package org.dennisromano.dailyexchange.infrastructure.reporting;
 
+import org.dennisromano.dailyexchange.domain.model.MarketReport;
 import org.dennisromano.dailyexchange.domain.model.MarketState;
+import org.dennisromano.dailyexchange.domain.model.ShockEvent;
 import org.dennisromano.dailyexchange.domain.ports.MarketReportPort;
+import org.springframework.stereotype.Component;
 
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * Console-based market state formatter using Italian locale conventions.
@@ -25,13 +29,12 @@ import java.util.Locale;
  * 
  * <h2>Example Output</h2>
  * <pre>
- * [PROTOCOL][BULL]
+ * day: 1085
  * Volatility: 21,35%
  * Variation: 1,24%
  * Price: € 103,45
  * Quantity: 2.045.320
  * Capital: € 211.588.344,00
- * -----------------------------------
  * </pre>
  * 
  * <h2>Thread Safety</h2>
@@ -45,36 +48,31 @@ import java.util.Locale;
  * @see MarketReportPort
  * @see MarketState
  */
-public class ConsoleMarketReporter implements MarketReportPort {
-
-    /** Company/protocol identifier displayed in the report header */
-    private static final String COMPANY = "PROTOCOL";
+@Component
+public class MarketReporter implements MarketReportPort {
     
     /**
      * Thread-local currency formatter for Italian locale.
      * Uses Euro symbol and Italian decimal/thousands separators.
      */
-    private static final ThreadLocal<NumberFormat> CURRENCY_FORMAT =
-            ThreadLocal.withInitial(() -> NumberFormat.getCurrencyInstance(Locale.ITALY));
+    private static final ThreadLocal<NumberFormat> CURRENCY_FORMAT = ThreadLocal.withInitial(() -> NumberFormat.getCurrencyInstance(Locale.ITALY));
 
     /**
      * Thread-local number formatter for Italian locale.
      * Uses Italian decimal/thousands separators for quantity display.
      */
-    private static final ThreadLocal<NumberFormat> NUMBER_FORMAT =
-            ThreadLocal.withInitial(() -> NumberFormat.getNumberInstance(Locale.ITALY));
+    private static final ThreadLocal<NumberFormat> NUMBER_FORMAT = ThreadLocal.withInitial(() -> NumberFormat.getNumberInstance(Locale.ITALY));
 
     /**
      * Thread-local percentage formatter for Italian locale.
      * Configured to always show exactly 2 decimal places.
      */
-    private static final ThreadLocal<NumberFormat> PERCENT_FORMAT =
-            ThreadLocal.withInitial(() -> {
-                NumberFormat nf = NumberFormat.getPercentInstance(Locale.ITALY);
-                nf.setMinimumFractionDigits(2);
-                nf.setMaximumFractionDigits(2);
-                return nf;
-            });
+    private static final ThreadLocal<NumberFormat> PERCENT_FORMAT = ThreadLocal.withInitial(() -> {
+        NumberFormat nf = NumberFormat.getPercentInstance(Locale.ITALY);
+        nf.setMinimumFractionDigits(2);
+        nf.setMaximumFractionDigits(2);
+        return nf;
+    });
 
     /**
      * Formats the market state into a human-readable console report.
@@ -106,40 +104,48 @@ public class ConsoleMarketReporter implements MarketReportPort {
      * modification issues.</p>
      * 
      * @param state the market state to format (must not be null)
-     * @return a formatted string containing all market information, ready for console output
+     * @return a formatted string containing all market information, ready for report
      * 
      * @throws NullPointerException if state is null
      */
     @Override
-    public String format(MarketState state) {
-        NumberFormat currency = CURRENCY_FORMAT.get();
-        NumberFormat number = NUMBER_FORMAT.get();
-        NumberFormat percent = PERCENT_FORMAT.get();
+    public MarketReport generateReport(MarketState state, ShockEvent shockEvent) {
+        final NumberFormat currency = CURRENCY_FORMAT.get();
+        final NumberFormat number = NUMBER_FORMAT.get();
+        final NumberFormat percent = PERCENT_FORMAT.get();
 
         // Calculate the ACTUAL price variation from the previous step
-        double priceVariation = state.priceVariation();
+        final double priceVariation = state.priceVariation();
         
         // Determine if it's a BULL market (growth) or BEAR market (decline) based on variation
-        String operationType = priceVariation >= 0 ? "BULL" : "BEAR";
+        final String operationType = priceVariation >= 0 ? "BULL" : "BEAR";
         
         // Calculate market capitalization (price × quantity)
-        double capital = state.price() * state.quantity();
+        final double capital = state.price() * state.quantity();
 
         // Format all values according to Italian locale
-        String msgPrefix = "[" + COMPANY + "][" + operationType + "]";
-        String outCapital = currency.format(capital);
-        String outPrice = currency.format(state.price());
-        String outQuantity = number.format(state.quantity());
-        String outVariation = percent.format(priceVariation);
-        String outSigma = percent.format(state.sigma());
+        final String day = String.valueOf(state.day());
+        final String outCapital = currency.format(capital);
+        final String outPrice = currency.format(state.price());
+        final String outQuantity = number.format(state.quantity());
+        final String outVariation = percent.format(priceVariation);
+        final String outSigma = percent.format(state.sigma());
 
-        return new StringBuilder(msgPrefix)
-                .append("\nVolatility: ").append(outSigma)
-                .append("\nVariation: ").append(outVariation)
-                .append("\nPrice: ").append(outPrice)
-                .append("\nQuantity: ").append(outQuantity)
-                .append("\nCapital: ").append(outCapital)
-                .append("\n-----------------------------------")
-                .toString();
+        final Optional<ShockEvent> shock = Optional.ofNullable(shockEvent);
+        final String shockEventTitle = shock.map(ShockEvent::title).orElse(null);
+        final String shockEventIntensity = shock.map(s -> String.valueOf(s.intensity())).orElse(null);
+
+        return new MarketReport(
+                day,
+                "PROTOCOL",
+                operationType,
+                outSigma,
+                outVariation,
+                outPrice,
+                outQuantity,
+                outCapital,
+                shockEventTitle,
+                shockEventIntensity
+        );
     }
 }
