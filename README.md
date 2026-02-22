@@ -53,7 +53,7 @@ Infrastructure mappers use `ThreadLocal<NumberFormat>` to ensure high-performanc
 * [ ] **Kafka**
 * [ ] **Redis**
 * [ ] **PostgreSQL**
-* [ ] **Demo enviroment**
+* [ ] **Demo environment**
 * [ ] **Envoy**
 
 ### Service 1 - dailyexchange - Market Dynamics
