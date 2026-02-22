@@ -4,10 +4,10 @@
 ---
 
 ## Architectural Overview
-The system is designed following the **Clean Architecture** principles to ensure that the core business logic (Stochastic Market Models) remains independent of infrastructure details (REST, Kafka, Databases).
+The system is designed following the **Clean Architecture** principles to ensure that the core business logic (Stochastic Market Models) remains independent of infrastructure details (REST, Kafka, Database).
 
 ### Core Components
-1. **Market Dynamics (Service 1 - *In Progress*):** The "Brain". Orchestrates stochastic processes (GBM, Volatility Mean Reversion) to determine daily market trends.
+1. **Market Dynamics (Service 1 - dailyexchange - *In Progress*):** The "Brain". Orchestrates stochastic processes (GBM, Volatility Mean Reversion) to determine daily market trends.
 2. **Trade Generator (Service 2 - *TBD*):** The "Engine". Consumes market trends via **Kafka** and generates millions of atomic transactions using **Redis** as a low-latency state store.
 3. **Infrastructure (*TBD*):** Orchestrated via **Docker** and **Envoy Proxy** as an L7 edge gateway for observability and resilience.
 
@@ -15,15 +15,15 @@ The system is designed following the **Clean Architecture** principles to ensure
 
 ## Tech Stack
 
-| Layer              | Technology     | Key Reason                                                               |
-|--------------------|----------------|--------------------------------------------------------------------------|
-| **Language**       | Java 25        | Utilizing Records, Pattern Matching, and Virtual Threads (Project Loom). |
-| **Framework**      | Spring Boot 4  | Industry standard for microservices with native GraalVM support.         |
-| **Architecture**   | Hexagonal      | Strict decoupling of business logic from external drivers.               |
-| **Database (SQL)** | PostgreSQL 18	 | ACID-compliant storage for historical audits and relational integrity.   |
-| **Messaging**      | Apache Kafka   | Handles backpressure during massive transaction bursts.                  |
-| **Caching**        | Redis          | Sub-millisecond state management for real-time market snapshots.         |
-| **Edge Proxy**     | Envoy          | Advanced traffic management and observability (Cloud-Native standard).   |
+| Layer              | Technology     | Key Reason                                                             |
+|--------------------|----------------|------------------------------------------------------------------------|
+| **Language**       | Java 25        | Utilizing Records, Pattern Matching, and Virtual Threads.              |
+| **Framework**      | Spring Boot 4  | Industry standard for microservices with native GraalVM support.       |
+| **Architecture**   | Hexagonal      | Strict decoupling of business logic from external drivers.             |
+| **Database (SQL)** | PostgreSQL 18	 | ACID-compliant storage for historical audits and relational integrity. |
+| **Messaging**      | Apache Kafka   | Handles backpressure during massive transaction bursts.                |
+| **Caching**        | Redis          | Sub-millisecond state management for real-time market snapshots.       |
+| **Edge Proxy**     | Envoy          | Advanced traffic management and observability (Cloud-Native standard). |
 
 ---
 
@@ -56,7 +56,7 @@ Infrastructure mappers use `ThreadLocal<NumberFormat>` to ensure high-performanc
 * [ ] **Demo enviroment**
 * [ ] **Envoy**
 
-### Service 1 - Core Market Simulator
+### Service 1 - dailyexchange - Market Dynamics
 * [x] **Mathematics Engine**
 * [x] **Hexagonal Architecture**
 * [x] **Microservice Structure**
