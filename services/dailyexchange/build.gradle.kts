@@ -18,12 +18,25 @@ repositories {
     mavenCentral()
 }
 
+val mockitoAgent by configurations.creating
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    "mockitoAgent"("org.mockito:mockito-core:5.23.0") {
+        isTransitive = false
+    }
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+
+    jvmArgs("-javaagent:${configurations.getByName("mockitoAgent").asPath}")
+
+    testLogging {
+        events("passed", "skipped", "failed", "standardOut", "standardError")
+        showStandardStreams = true
+    }
 }

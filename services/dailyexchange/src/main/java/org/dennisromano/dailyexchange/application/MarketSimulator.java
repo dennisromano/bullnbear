@@ -69,8 +69,8 @@ public class MarketSimulator {
             PricingStrategy pricingStrategy,
             ShockProvider shockProvider,
             RandomGenerator rng,
-            double targetMu) {
-        
+            double targetMu
+    ) {
         this.volatilityStrategy = volatilityStrategy;
         this.pricingStrategy = pricingStrategy;
         this.shockProvider = shockProvider;
