@@ -1,6 +1,9 @@
 # Bull&Bear - High-Frequency Market Simulator
 **Bull&Bear** is a distributed system designed to simulate complex market dynamics and high-frequency trading (HFT) environments. The project demonstrates the application of **Hexagonal Architecture**, event-driven patterns, and high-throughput data processing.
 
+| Microservice  | Coverage                                                                                                                                                |
+|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| dailyexchange | [![codecov](https://codecov.io/gh/dennisromano/bullnbear/branch/main/graph/badge.svg?flag=dailyexchange)](https://codecov.io/gh/dennisromano/bullnbear) |
 ---
 
 ## Architectural Overview
