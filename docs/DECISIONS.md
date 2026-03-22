@@ -68,3 +68,30 @@ This document tracks the key architectural decisions for **DailyExchange**, the 
   * Redis TTL: In-memory state utilizes Time-To-Live (TTL) settings for automatic expiration.
   * Scheduled Cleanup: A Spring @Scheduled task executes a "Hard Delete" on the SQL database for any records exceeding the 60-minute threshold.
 * **Motivation**: Privacy by Design. This ensures the system remains clean, performant, and compliant with the strictest data minimization principles (GDPR mindset), even in a demo environment.
+
+---
+
+## ADR 9: @WebMvcTest as the Testing Strategy for the REST Layer
+
+* **Status**: Accepted
+* **Context**: Controller tests must be isolated from domain logic and infrastructure without loading the full Spring context.
+* **Decision**: Use @WebMvcTest with @MockitoBean and MockMvc to test only the web slice.
+* **Motivation**: Fast feedback loop aligned with the Test Pyramid principle. Full context tests (@SpringBootTest) were rejected due to startup overhead.
+
+---
+
+## ADR 10: JaCoCo as Coverage Tool with 80% Minimum Threshold
+
+* **Status**: Accepted
+* **Context**: Coverage must be measurable, enforceable, and visible without manual steps.
+* **Decision**: JaCoCo Gradle plugin with 80% instruction coverage enforced at build time via jacocoTestCoverageVerification. Build fails if threshold is not met.
+* **Motivation**: Coverage as a quality gate, not just a metric. SonarQube was rejected as overkill for a single-developer monorepo.
+
+---
+
+## ADR 11: GitHub Actions + Codecov as CI Pipeline
+
+* **Status**: Accepted
+* **Context**: Every push must automatically validate tests and coverage with results publicly visible in the repository.
+* **Decision**: GitHub Actions runs tests and uploads the JaCoCo XML report to Codecov on every push. Per-microservice badges are displayed in each README.
+* **Motivation**: Shift-left quality and open source visibility. Jenkins and CircleCI were rejected in favor of native GitHub integration.
