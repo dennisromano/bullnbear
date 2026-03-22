@@ -1,6 +1,6 @@
 plugins {
     java
-    id("org.springframework.boot") version "4.0.3"
+    id("org.springframework.boot") version "4.0.4"
     id("io.spring.dependency-management") version "1.1.7"
 }
 
@@ -14,26 +14,23 @@ java {
     }
 }
 
+springBoot {
+    mainClass.set("org.dennisromano.dailyexchange.infrastructure.DailyExchangeSpringBootApplication")
+}
+
 repositories {
     mavenCentral()
 }
 
-val mockitoAgent by configurations.creating
-
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
-    "mockitoAgent"("org.mockito:mockito-core:5.23.0") {
-        isTransitive = false
-    }
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
-
-    jvmArgs("-javaagent:${configurations.getByName("mockitoAgent").asPath}")
+    jvmArgs("-XX:+EnableDynamicAgentLoading")
 
     testLogging {
         events("passed", "skipped", "failed", "standardOut", "standardError")
