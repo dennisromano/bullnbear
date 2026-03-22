@@ -17,7 +17,7 @@ jobs:
           cache: 'gradle'
 
       - name: Test dailyexchange
-        run: ./gradlew :dailyexchange:test :dailyexchange:jacocoTestReport
+        run: ./gradlew :services:dailyexchange:test :services:dailyexchange:jacocoTestReport
 
       - name: Upload coverage dailyexchange
         uses: codecov/codecov-action@v5
