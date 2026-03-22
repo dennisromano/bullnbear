@@ -1,77 +1,124 @@
-# Bull&Bear - High-Frequency Market Simulator
-**Bull&Bear** is a distributed system designed to simulate complex market dynamics and high-frequency trading (HFT) environments. The project demonstrates the application of **Hexagonal Architecture**, event-driven patterns, and high-throughput data processing.
+# dailyexchange
 
----
+[![codecov](https://codecov.io/gh/dennisromano/bullnbear/branch/main/graph/badge.svg?flag=dailyexchange)](https://codecov.io/gh/dennisromano/bullnbear)
 
-## Architectural Overview
-The system is designed following the **Clean Architecture** principles to ensure that the core business logic (Stochastic Market Models) remains independent of infrastructure details (REST, Kafka, Databases).
+A microservice that simulates daily financial market dynamics using stochastic mathematical models. Given a set of initial parameters, it runs a day-by-day simulation of price, volatility, quantity, and shock events for a fictional asset.
 
-### Core Components
-1. **Market Dynamics (Service 1 - *In Progress*):** The "Brain". Orchestrates stochastic processes (GBM, Volatility Mean Reversion) to determine daily market trends.
-2. **Trade Generator (Service 2 - *TBD*):** The "Engine". Consumes market trends via **Kafka** and generates millions of atomic transactions using **Redis** as a low-latency state store.
-3. **Infrastructure (*TBD*):** Orchestrated via **Docker** and **Envoy Proxy** as an L7 edge gateway for observability and resilience.
+## Architecture
 
----
+The service follows a **Hexagonal Architecture (Ports & Adapters)** pattern:
+
+```
+src/main/java/org/dennisromano/dailyexchange/
+├── domain/
+│   ├── model/          # Core domain entities (MarketState, SimulationResult, ShockEvent, ...)
+│   └── ports/          # Input/output interfaces (DailyExchangeInputPort, VolatilityStrategy, ...)
+├── application/
+│   └── MarketSimulator.java        # Orchestrates the simulation step-by-step
+└── infrastructure/
+    ├── DailyExchangeSpringBootApplication.java
+    ├── generators/     # StochasticShockProvider
+    ├── mathematics/    # GeometricBrownianMotionStrategy, MeanRevertingVolatilityStrategy
+    ├── reporting/      # MarketReporter
+    └── rest/
+        ├── controller/ # DailyExchangeRestController
+        ├── dto/        # DailyExchangeRequest, DailyExchangeResponse
+        ├── mapper/     # DailyExchangeMapper
+        └── service/    # DailyExchangeSimulator (implements DailyExchangeInputPort)
+```
+
+## Mathematical Models
+
+The simulation uses two stochastic processes:
+
+- **Geometric Brownian Motion (GBM)** — models price evolution with drift (μ) and volatility (σ), including the Itô correction (−0.5σ²)
+- **Mean-Reverting Volatility (Heston-inspired)** — models volatility as a stochastic process that reverts toward a target level (κ, vol-of-vol)
+
+Shock events are generated probabilistically by `StochasticShockProvider` and temporarily increase volatility when triggered.
+
+## API
+
+### `POST /api/v1/dailyexchange/simulate`
+
+Runs a market simulation and returns a day-by-day result list.
+
+**Request body:**
+
+```json
+{
+  "simulationDays": 252,
+  "tradingDaysPerYear": 252,
+  "initialPrice": 100.0,
+  "initialQuantity": 1000.0,
+  "targetVolatility": 0.2,
+  "targetMu": 0.07,
+  "kappa": 3.0,
+  "volOfVol": 0.3,
+  "shockProbability": 0.02
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `simulationDays` | int | Number of trading days to simulate |
+| `tradingDaysPerYear` | double | Used to compute the time step dt = 1/tradingDaysPerYear |
+| `initialPrice` | double | Starting asset price |
+| `initialQuantity` | double | Starting asset quantity |
+| `targetVolatility` | double | Long-run target volatility (σ̄) |
+| `targetMu` | double | Target annual drift (expected return) |
+| `kappa` | double | Mean-reversion speed for volatility |
+| `volOfVol` | double | Volatility of volatility |
+| `shockProbability` | double | Daily probability of a shock event (0.0–1.0) |
+
+**Response body (array):**
+
+```json
+[
+  {
+    "day": "Day 1",
+    "companyName": "PROTOCOL",
+    "operationType": "BULL",
+    "volatility": "18.45%",
+    "variation": "+1.23%",
+    "price": "101.23",
+    "quantity": "1002.14",
+    "capital": "101,453.22",
+    "shockEventTitle": null,
+    "shockEventIntensity": null
+  }
+]
+```
 
 ## Tech Stack
 
-| Layer              | Technology     | Key Reason                                                               |
-|--------------------|----------------|--------------------------------------------------------------------------|
-| **Language**       | Java 25        | Utilizing Records, Pattern Matching, and Virtual Threads (Project Loom). |
-| **Framework**      | Spring Boot 4  | Industry standard for microservices with native GraalVM support.         |
-| **Architecture**   | Hexagonal      | Strict decoupling of business logic from external drivers.               |
-| **Database (SQL)** | PostgreSQL 18	 | ACID-compliant storage for historical audits and relational integrity.   |
-| **Messaging**      | Apache Kafka   | Handles backpressure during massive transaction bursts.                  |
-| **Caching**        | Redis          | Sub-millisecond state management for real-time market snapshots.         |
-| **Edge Proxy**     | Envoy          | Advanced traffic management and observability (Cloud-Native standard).   |
+| Technology | Version |
+|---|---|
+| Java | 25 |
+| Spring Boot | 4.0.4 |
+| Gradle | 9.4.1 |
+| JaCoCo | (via Spring Boot BOM) |
+| JUnit | (via spring-boot-starter-webmvc-test) |
+| Mockito | (via spring-boot-starter-webmvc-test) |
 
----
+## Running Locally
 
-## Key Design Patterns
+```bash
+# From the monorepo root
+./gradlew :services:dailyexchange:bootRun
+```
 
-### 1. Hexagonal Architecture
-The domain layer is a pure Java module. It communicates with the outside world only through interfaces (Ports). This allows us to switch from a REST controller to a CLI or a Cron task without touching the simulation logic.
+The service starts on `http://localhost:8080`.
 
-### 2. Strategy Pattern
-Market pricing and volatility are implemented as swappable strategies (e.g., `PricingStrategy`). This allows for easy integration of different mathematical models like Heston or Black-Scholes.
+## Running Tests
 
-### 3. Thread-Safe Mapping
-Infrastructure mappers use `ThreadLocal<NumberFormat>` to ensure high-performance, thread-safe formatting for financial reports without the overhead of creating new formatter instances for every request.
+```bash
+# From the monorepo root
+./gradlew :services:dailyexchange:test
 
----
+# With coverage report (output: services/dailyexchange/build/reports/jacoco/test/html/index.html)
+./gradlew :services:dailyexchange:test :services:dailyexchange:jacocoTestReport
+```
 
-## Getting Started
+## Coverage
 
-### TBD
-
----
-
-## Roadmap & Upcoming Features
-
-## General
-* [ ] **Docker**
-* [ ] **Kafka**
-* [ ] **Redis**
-* [ ] **PostgreSQL**
-* [ ] **Demo enviroment**
-* [ ] **Envoy**
-
-### Service 1 - Core Market Simulator
-* [x] **Mathematics Engine**
-* [x] **Hexagonal Architecture**
-* [x] **Microservice Structure**
-* [x] **Rest API**
-
-### Service 2 - Kafka-driven Transaction Generator
-* [ ] TBD
-
-### Frontend -  Real-time Market Dashboard in **Flutter**
-* [ ] TBD
-
----
-
-## Author
-**Dennis Romano** - *Software Architect*
-
-* LinkedIn: www.linkedin.com/in/dennis-romano
-* Portfolio: TBD
+Minimum coverage enforced: **80%** (via `jacocoTestCoverageVerification`).
