@@ -33,21 +33,17 @@ class StochasticShockProviderTest {
     @Test
     @DisplayName("Should generate a valid ShockEvent when RNG triggers it")
     void shouldGenerateShockEvent() {
-        // 1. Il "tiro di dadi" è inferiore alla probabilità (es. 0.02 < 0.05)
         when(rng.nextDouble()).thenReturn(0.02);
 
-        // 2. Mock dei parametri dello shock
         double mockIntensity = 0.55;
         when(rng.nextDouble(0.3, 0.6)).thenReturn(mockIntensity);
-        when(rng.nextInt(anyInt())).thenReturn(2); // Indice 2 della lista
+        when(rng.nextInt(anyInt())).thenReturn(2);
 
-        // Esecuzione
         Optional<ShockEvent> result = undertest.generateShock();
 
-        // Verifica con Pattern Matching (se ShockEvent è un Record o classe standard)
         assertTrue(result.isPresent());
         result.ifPresent(event -> {
-            assertEquals(mockIntensity, event.intensity()); // Assumendo record style o getter
+            assertEquals(mockIntensity, event.intensity());
             assertNotNull(event.title());
             assertFalse(event.title().isBlank());
         });
@@ -59,13 +55,11 @@ class StochasticShockProviderTest {
     @Test
     @DisplayName("Should return empty Optional when RNG is above threshold")
     void shouldReturnEmptyOnNoShock() {
-        // 0.8 > 0.05 -> Nessuno shock
         when(rng.nextDouble()).thenReturn(0.8);
 
         var result = undertest.generateShock();
 
         assertTrue(result.isEmpty());
-        // Verifichiamo che NON siano stati chiamati i metodi per intensità e titoli
         verify(rng, times(1)).nextDouble();
         verifyNoMoreInteractions(rng);
     }
