@@ -81,8 +81,8 @@ class GeometricBrownianMotionStrategyTest {
 
         final GeometricBrownianMotionStrategy testStrategy = new GeometricBrownianMotionStrategy(DT_DAILY, mockRng);
 
-        final double lowVolPrice = testStrategy.calculateNextPrice(s0, mu, 0.1);  // 10% vol
-        final double highVolPrice = testStrategy.calculateNextPrice(s0, mu, 0.5); // 50% vol
+        final double lowVolPrice = testStrategy.calculateNextPrice(s0, mu, 0.1);
+        final double highVolPrice = testStrategy.calculateNextPrice(s0, mu, 0.5);
 
         assertTrue(highVolPrice > lowVolPrice);
     }
