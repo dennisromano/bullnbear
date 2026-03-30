@@ -79,7 +79,7 @@ class DailyExchangeRestControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(defaultBody)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1)); // Ora la lista ha 1 elemento
+                .andExpect(jsonPath("$.length()").value(1));
 
         verify(dailyExchangeMapper).toResponse(mockResult);
     }
