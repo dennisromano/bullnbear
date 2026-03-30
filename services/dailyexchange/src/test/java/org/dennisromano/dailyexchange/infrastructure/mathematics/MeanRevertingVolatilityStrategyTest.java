@@ -111,4 +111,15 @@ class MeanRevertingVolatilityStrategyTest {
         assertEquals(TARGET_SIGMA, averageVol, 0.05,
                 "Average volatility " + averageVol + " is too far from target " + TARGET_SIGMA);
     }
+
+    @Test
+    @DisplayName("Should throw IllegalArgumentException if currentSigma is negative")
+    void shouldThrowExceptionWhenCurrentSigmaIsNegative() {
+        final IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> strategy.calculateNextVolatility(-0.01)
+        );
+
+        assertEquals("Current volatility cannot be negative", exception.getMessage());
+    }
 }
