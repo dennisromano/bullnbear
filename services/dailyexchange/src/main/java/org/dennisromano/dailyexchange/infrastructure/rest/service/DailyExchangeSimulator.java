@@ -22,7 +22,7 @@ public class DailyExchangeSimulator implements DailyExchangeInputPort {
     public List<SimulationResult> calculateSimulation(SimulationConfig simulationConfig) {
         final MarketSimulator simulator = getMarketSimulator(simulationConfig);
 
-        final MarketState state = new MarketState(
+        MarketState currentState = new MarketState(
                 0,
                 simulationConfig.initialPrice(),
                 simulationConfig.initialPrice(),
@@ -33,8 +33,10 @@ public class DailyExchangeSimulator implements DailyExchangeInputPort {
 
         final List<SimulationResult> simulationResults = new ArrayList<>();
         for (int day = 1; day <= simulationConfig.simulationDays(); day++) {
-            final SimulationResult result = simulator.next(day, state);
+            final SimulationResult result = simulator.next(day, currentState);
             simulationResults.add(result);
+
+            currentState = result.state();
         }
 
         return simulationResults;
