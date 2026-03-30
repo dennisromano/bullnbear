@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class DailyExchangeSpringBootApplication {
-    void main() {
+    static void main() {
         SpringApplication.run(DailyExchangeSpringBootApplication.class);
     }
 }
