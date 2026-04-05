@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/dailyexchange")
-@Tag(name = "Market Simulation", description = "Core engine for generating synthetic market data")
+@Tag(name = "Daily Exchange", description = "Core engine for generating synthetic market data")
 public class DailyExchangeRestController {
 
     @Autowired

@@ -95,3 +95,12 @@ This document tracks the key architectural decisions for **DailyExchange**, the 
 * **Context**: Every push must automatically validate tests and coverage with results publicly visible in the repository.
 * **Decision**: GitHub Actions runs tests and uploads the JaCoCo XML report to Codecov on every push. Per-microservice badges are displayed in each README.
 * **Motivation**: Shift-left quality and open source visibility. Jenkins and CircleCI were rejected in favor of native GitHub integration.
+
+---
+
+## ADR 12: OpenAPI 3 (Swagger) for Documentation
+
+* **Status**: Accepted
+* **Context**: In a microservices architecture, API boundaries must be explicitly defined, discoverable, and testable without access to the source code or external clients (e.g., Postman).
+* **Decision**: Integration of springdoc-openapi to automatically generate OpenAPI 3.0 definitions. Documentation is enriched via annotations (@Schema, @Operation) on Records and Controllers to provide a "Semantic Contract".
+* **Motivation**: Reduces the friction between backend and potential consumers; preventing "documentation drift".
