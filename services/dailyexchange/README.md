@@ -58,17 +58,17 @@ Runs a market simulation and returns a day-by-day result list.
 }
 ```
 
-| Field | Type | Description |
-|---|---|---|
-| `simulationDays` | int | Number of trading days to simulate |
+| Field                | Type   | Description                                             |
+|----------------------|--------|---------------------------------------------------------|
+| `simulationDays`     | int    | Number of trading days to simulate                      |
 | `tradingDaysPerYear` | double | Used to compute the time step dt = 1/tradingDaysPerYear |
-| `initialPrice` | double | Starting asset price |
-| `initialQuantity` | double | Starting asset quantity |
-| `targetVolatility` | double | Long-run target volatility (σ̄) |
-| `targetMu` | double | Target annual drift (expected return) |
-| `kappa` | double | Mean-reversion speed for volatility |
-| `volOfVol` | double | Volatility of volatility |
-| `shockProbability` | double | Daily probability of a shock event (0.0–1.0) |
+| `initialPrice`       | double | Starting asset price                                    |
+| `initialQuantity`    | double | Starting asset quantity                                 |
+| `targetVolatility`   | double | Long-run target volatility (σ̄)                         |
+| `targetMu`           | double | Target annual drift (expected return)                   |
+| `kappa`              | double | Mean-reversion speed for volatility                     |
+| `volOfVol`           | double | Volatility of volatility                                |
+| `shockProbability`   | double | Daily probability of a shock event (0.0–1.0)            |
 
 **Response body (array):**
 

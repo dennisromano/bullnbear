@@ -1,5 +1,8 @@
 package org.dennisromano.dailyexchange.infrastructure.rest.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dennisromano.dailyexchange.domain.model.SimulationConfig;
 import org.dennisromano.dailyexchange.domain.model.SimulationResult;
 import org.dennisromano.dailyexchange.domain.ports.DailyExchangeInputPort;
@@ -14,6 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/dailyexchange")
+@Tag(name = "Market Simulation", description = "Core engine for generating synthetic market data")
 public class DailyExchangeRestController {
 
     @Autowired
@@ -22,7 +26,13 @@ public class DailyExchangeRestController {
     @Autowired
     private DailyExchangeMapper dailyExchangeMapper;
 
-    @PostMapping(value = "/simulate")
+    @Operation(
+        summary = "Run market simulation",
+        description = "Executes a stochastic market simulation based on mean-reversion and volatility parameters. Returns a day-by-day list of price and quantity results."
+    )
+    @ApiResponse(responseCode = "200", description = "Simulation completed successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid simulation parameters")
+    @PostMapping("/simulate")
     public ResponseEntity<List<DailyExchangeResponse>> getSimulate(@RequestBody DailyExchangeRequest request) {
         final SimulationConfig simulationConfig = dailyExchangeMapper.toDomain(request);
         final List<SimulationResult> data = dailyExchangeInputPort.calculateSimulation(simulationConfig);
