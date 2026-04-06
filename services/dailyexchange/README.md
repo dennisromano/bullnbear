@@ -4,121 +4,100 @@
 
 A microservice that simulates daily financial market dynamics using stochastic mathematical models. Given a set of initial parameters, it runs a day-by-day simulation of price, volatility, quantity, and shock events for a fictional asset.
 
-## Architecture
+---
 
-The service follows a **Hexagonal Architecture (Ports & Adapters)** pattern:
+## 📉 Mathematical Models
+
+The engine leverages two primary stochastic processes to generate synthetic market data:
+
+- **Geometric Brownian Motion (GBM):** Models price evolution with drift ($\mu$) and volatility ($\sigma$), including the Itô correction ($-0.5\sigma^2$).
+- **Mean-Reverting Volatility (Heston-inspired):** Models volatility as a stochastic process that reverts toward a long-run target level ($\kappa$, vol-of-vol).
+
+Shock events are handled by the `StochasticShockProvider`, which introduces probabilistic spikes in volatility to simulate real-world market stress.
+
+---
+
+## 🏗️ Architecture
+
+The service follows a **Hexagonal Architecture (Ports & Adapters)** pattern to ensure a decoupled and testable core logic:
 
 ```
 src/main/java/org/dennisromano/dailyexchange/
 ├── domain/
-│   ├── model/          # Core domain entities (MarketState, SimulationResult, ShockEvent, ...)
-│   └── ports/          # Input/output interfaces (DailyExchangeInputPort, VolatilityStrategy, ...)
+│   ├── model/
+│   └── ports/
 ├── application/
-│   └── MarketSimulator.java        # Orchestrates the simulation step-by-step
 └── infrastructure/
-    ├── DailyExchangeSpringBootApplication.java
-    ├── generators/     # StochasticShockProvider
-    ├── mathematics/    # GeometricBrownianMotionStrategy, MeanRevertingVolatilityStrategy
-    ├── reporting/      # MarketReporter
+    ├── generators/
+    ├── mathematics/
+    ├── reporting/
     └── rest/
-        ├── controller/ # DailyExchangeRestController
-        ├── dto/        # DailyExchangeRequest, DailyExchangeResponse
-        ├── mapper/     # DailyExchangeMapper
-        └── service/    # DailyExchangeSimulator (implements DailyExchangeInputPort)
-```
+        ├── controller/ 
+        ├── dto/
+        ├── mapper/
+        └── service/
+````
 
-## Mathematical Models
+### 🏛️ Architectural Governance
 
-The simulation uses two stochastic processes:
+This project follows a disciplined approach to decision-making. Key architectural choices are documented via **Architecture Decision Records (ADRs)**:
 
-- **Geometric Brownian Motion (GBM)** — models price evolution with drift (μ) and volatility (σ), including the Itô correction (−0.5σ²)
-- **Mean-Reverting Volatility (Heston-inspired)** — models volatility as a stochastic process that reverts toward a target level (κ, vol-of-vol)
+| ID                                                                                              | Title                      | Rationale                                                                                                                |
+|-------------------------------------------------------------------------------------------------|----------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| [ADR 01](./../../docs/DECISIONS.md#adr-1-adoption-of-hexagonal-architecture-ports--adapters)    | **Hexagonal Architecture** | Isolates complex stochastic calculus from Spring Boot infrastructure, ensuring pure domain testability.                  |
+| [ADR 02](./../../docs/DECISIONS.md#adr-2-decoupling-domain-model-from-api-response-dtos)        | **DTO Mapping Strategy**   | Protects the API contract by decoupling Internal Domain Records from REST responses via a dedicated Mapping layer.       |
+| [ADR 03](./../../docs/DECISIONS.md#adr-3-thread-safe-formatting-threadlocal-formatters)         | **Thread-Safe Formatting** | Optimizes performance using ThreadLocal for high-frequency financial number formatting, reducing GC overhead.            |
+| [ADR 06](./../../docs/DECISIONS.md#adr-6-strategy-pattern-for-mathematical-modeling)            | **Strategy Pattern**       | Enables swappable mathematical engines (e.g., GBM, Heston) without modifying the core simulation orchestrator.           |
+| [ADR 09](./../../docs/DECISIONS.md#adr-9-webmvctest-as-the-testing-strategy-for-the-rest-layer) | **Isolated Web Testing**   | Implements @WebMvcTest for fast, sliced testing of the REST layer, adhering to the Test Pyramid principles.              |
+| [ADR 10](./../../docs/DECISIONS.md#adr-10-jacoco-as-coverage-tool-with-80-minimum-threshold)    | **JaCoCo Quality Gate**    | Enforces a strict 80% instruction coverage threshold at build time to ensure the reliability of financial models.        |
+| [ADR 11](./../../docs/DECISIONS.md#adr-12-openapi-3-swagger-for-documentation)                  | **OpenAPI (Swagger)**      | Establishes a "Single Source of Truth" for the API contract, providing a live, semantic sandbox for integration testing. |
 
-Shock events are generated probabilistically by `StochasticShockProvider` and temporarily increase volatility when triggered.
+---
 
-## API
+## 🛠️ Tech Stack
 
-### `POST /api/v1/dailyexchange/simulate`
+| Technology        | Version |
+|-------------------|---------|
+| Java              | 25      |
+| Spring Boot       | 4.0.5   |
+| Gradle            | 9.4.1   |
+| SpringDoc OpenAPI | 3.0.2   |
+| JaCoCo            | 0.8.12  |
+| JUnit             | 6.0.3   |
+| Mockit            | 5.20.0  |
 
-Runs a market simulation and returns a day-by-day result list.
+---
 
-**Request body:**
-
-```json
-{
-  "simulationDays": 252,
-  "tradingDaysPerYear": 252,
-  "initialPrice": 100.0,
-  "initialQuantity": 1000.0,
-  "targetVolatility": 0.2,
-  "targetMu": 0.07,
-  "kappa": 3.0,
-  "volOfVol": 0.3,
-  "shockProbability": 0.02
-}
-```
-
-| Field                | Type   | Description                                             |
-|----------------------|--------|---------------------------------------------------------|
-| `simulationDays`     | int    | Number of trading days to simulate                      |
-| `tradingDaysPerYear` | double | Used to compute the time step dt = 1/tradingDaysPerYear |
-| `initialPrice`       | double | Starting asset price                                    |
-| `initialQuantity`    | double | Starting asset quantity                                 |
-| `targetVolatility`   | double | Long-run target volatility (σ̄)                         |
-| `targetMu`           | double | Target annual drift (expected return)                   |
-| `kappa`              | double | Mean-reversion speed for volatility                     |
-| `volOfVol`           | double | Volatility of volatility                                |
-| `shockProbability`   | double | Daily probability of a shock event (0.0–1.0)            |
-
-**Response body (array):**
-
-```json
-[
-  {
-    "day": "Day 1",
-    "companyName": "PROTOCOL",
-    "operationType": "BULL",
-    "volatility": "18.45%",
-    "variation": "+1.23%",
-    "price": "101.23",
-    "quantity": "1002.14",
-    "capital": "101,453.22",
-    "shockEventTitle": null,
-    "shockEventIntensity": null
-  }
-]
-```
-
-## Tech Stack
-
-| Technology | Version |
-|---|---|
-| Java | 25 |
-| Spring Boot | 4.0.4 |
-| Gradle | 9.4.1 |
-| JaCoCo | (via Spring Boot BOM) |
-| JUnit | (via spring-boot-starter-webmvc-test) |
-| Mockito | (via spring-boot-starter-webmvc-test) |
-
-## Running Locally
+## 🚀 Running Locally
 
 ```bash
 # From the monorepo root
 ./gradlew :services:dailyexchange:bootRun
-```
+````
 
-The service starts on `http://localhost:8080`.
+The service will be available at `http://localhost:8080`.
 
-## Running Tests
+-----
+
+## 🔌 API Documentation
+
+This microservice adopts a **Contract-First** approach. The API documentation is automatically generated and synchronized with the implementation via Swagger UI.
+
+### How to access:
+
+1.  Start the service (see [Running Locally](README.md#-running-locally)).
+2.  Navigate to: [http://localhost:8080/swagger-ui/index.html](https://www.google.com/search?q=http://localhost:8080/swagger-ui/index.html)
+
+-----
+
+## 🧪 Running Tests & Coverage
 
 ```bash
-# From the monorepo root
+# Run all tests
 ./gradlew :services:dailyexchange:test
 
-# With coverage report (output: services/dailyexchange/build/reports/jacoco/test/html/index.html)
+# Generate JaCoCo report
 ./gradlew :services:dailyexchange:test :services:dailyexchange:jacocoTestReport
 ```
 
-## Coverage
-
-Minimum coverage enforced: **80%** (via `jacocoTestCoverageVerification`).
+*Note: Minimum instruction coverage is enforced at **80%** via `jacocoTestCoverageVerification`.*
