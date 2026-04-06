@@ -1,26 +1,17 @@
-# dailyexchange
+# Daily Exchange
 
 [![codecov](https://codecov.io/gh/dennisromano/bullnbear/branch/main/graph/badge.svg?flag=dailyexchange)](https://codecov.io/gh/dennisromano/bullnbear)
 
 A microservice that simulates daily financial market dynamics using stochastic mathematical models. Given a set of initial parameters, it runs a day-by-day simulation of price, volatility, quantity, and shock events for a fictional asset.
 
----
-
 ## 📉 Mathematical Models
-
 The engine leverages two primary stochastic processes to generate synthetic market data:
-
 - **Geometric Brownian Motion (GBM):** Models price evolution with drift ($\mu$) and volatility ($\sigma$), including the Itô correction ($-0.5\sigma^2$).
 - **Mean-Reverting Volatility (Heston-inspired):** Models volatility as a stochastic process that reverts toward a long-run target level ($\kappa$, vol-of-vol).
-
 Shock events are handled by the `StochasticShockProvider`, which introduces probabilistic spikes in volatility to simulate real-world market stress.
 
----
-
 ## 🏗️ Architecture
-
 The service follows a **Hexagonal Architecture (Ports & Adapters)** pattern to ensure a decoupled and testable core logic:
-
 ```
 src/main/java/org/dennisromano/dailyexchange/
 ├── domain/
@@ -39,7 +30,6 @@ src/main/java/org/dennisromano/dailyexchange/
 ````
 
 ### 🏛️ Architectural Governance
-
 This project follows a disciplined approach to decision-making. Key architectural choices are documented via **Architecture Decision Records (ADRs)**:
 
 | ID                                                                                              | Title                      | Rationale                                                                                                                |
@@ -51,8 +41,6 @@ This project follows a disciplined approach to decision-making. Key architectura
 | [ADR 09](./../../docs/DECISIONS.md#adr-9-webmvctest-as-the-testing-strategy-for-the-rest-layer) | **Isolated Web Testing**   | Implements @WebMvcTest for fast, sliced testing of the REST layer, adhering to the Test Pyramid principles.              |
 | [ADR 10](./../../docs/DECISIONS.md#adr-10-jacoco-as-coverage-tool-with-80-minimum-threshold)    | **JaCoCo Quality Gate**    | Enforces a strict 80% instruction coverage threshold at build time to ensure the reliability of financial models.        |
 | [ADR 11](./../../docs/DECISIONS.md#adr-12-openapi-3-swagger-for-documentation)                  | **OpenAPI (Swagger)**      | Establishes a "Single Source of Truth" for the API contract, providing a live, semantic sandbox for integration testing. |
-
----
 
 ## 🛠️ Tech Stack
 
@@ -66,8 +54,6 @@ This project follows a disciplined approach to decision-making. Key architectura
 | JUnit             | 6.0.3   |
 | Mockit            | 5.20.0  |
 
----
-
 ## 🚀 Running Locally
 
 ```bash
@@ -77,21 +63,14 @@ This project follows a disciplined approach to decision-making. Key architectura
 
 The service will be available at `http://localhost:8080`.
 
------
-
 ## 🔌 API Documentation
-
 This microservice adopts a **Contract-First** approach. The API documentation is automatically generated and synchronized with the implementation via Swagger UI.
 
 ### How to access:
-
 1.  Start the service (see [Running Locally](README.md#-running-locally)).
 2.  Navigate to: [http://localhost:8080/swagger-ui/index.html](https://www.google.com/search?q=http://localhost:8080/swagger-ui/index.html)
 
------
-
 ## 🧪 Running Tests & Coverage
-
 ```bash
 # Run all tests
 ./gradlew :services:dailyexchange:test
