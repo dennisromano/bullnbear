@@ -74,7 +74,7 @@ Infrastructure mappers use `ThreadLocal<NumberFormat>` to ensure high-performanc
 ---
 
 ## Author
-**Dennis Romano** - *Software Architect*
+**Dennis Romano** - *Solutions Architect*
 
 * LinkedIn: www.linkedin.com/in/dennis-romano
 * Portfolio: TBD
